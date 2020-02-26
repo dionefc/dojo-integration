@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/task
+		https://www.springframework.org/schema/task/spring-task.xsd
+		http://www.springframework.org/schema/integration
+		http://www.springframework.org/schema/integration/spring-integration-5.2.xsd
+		http://www.springframework.org/schema/integration/http
+		http://www.springframework.org/schema/integration/http/spring-integration-http-5.2.xsd">
+
+	<int:handler-retry-advice id="retryDojoAdvice" />
+
+	<int:channel id="dojo-spliter-channel" />
+	<int:channel id="dojo-reply-channel" />
+	<int:channel id="dojo-router-channel" />
+	<int:channel id="dojo-aggregator-channel" />
+	
+	<int:channel id="consulta-extrato-request-channel" />
+	<int:channel id="consulta-saldo-total-request" />
+
+	<int-http:inbound-gateway
+		path="/cliente/saldo" 
+		supported-methods="POST"
+		validator="restValidator"
+		request-payload-type="br.com.bradesco.cinv.orchestrator.saldo.request.SaldoRequest"
+		request-channel="dojo-spliter-channel"
+		reply-channel="dojo-reply-channel" reply-timeout="10000" />
+
+	<bean id="dojoSpliter" class="br.com.dojo.integration.DojoSplitter" />
+	<int:splitter ref="dojoSpliter" input-channel="dojo-spliter-channel" output-channel="dojo-router-channel" />
+
+	<int:payload-type-router input-channel="dojo-router-channel">
+		<int:mapping type="br.com.bradesco.cinv.orchestrator.saldo.request.ConsultaExtratoRequest" channel="consulta-extrato-request-channel" />
+		<int:mapping type="br.com.bradesco.cinv.orchestrator.saldo.request.SaldoRequest" channel="consulta-saldo-total-request" />
+	</int:payload-type-router>
+	
+	<int:channel-interceptor ref="awbInterceptor" pattern="consulta-saldo-total-request" />
+	
+	<int-http:outbound-gateway http-method="POST"
+		url="${aqwb.api.url}/aqwb/api/consultaextrato/cc"
+		rest-template="restTemplate"
+		request-channel="consulta-extrato-request-channel"
+		reply-channel="dojo-aggregator-channel"
+		expected-response-type="br.com.bradesco.cinv.orchestrator.saldo.response.ConsultaExtratoResponse">
+		<int-http:request-handler-advice-chain>
+			<ref bean="retryDojoAdvice" />
+		</int-http:request-handler-advice-chain>
+	</int-http:outbound-gateway>
+
+	<int-http:outbound-gateway http-method="POST"
+		url="${cliente.api.url}/cliente/saldo"
+		rest-template="restTemplate"
+		mapped-request-headers="x-stateless-closed, x-stateless-open, HTTP_REQUEST_HEADERS"
+		request-channel="consulta-saldo-total-request"
+		reply-channel="dojo-aggregator-channel"
+		expected-response-type="br.com.bradesco.cinv.orchestrator.saldo.response.SaldoTotalResponse">
+		<int-http:request-handler-advice-chain>
+			<ref bean="retryDojoAdvice" />
+		</int-http:request-handler-advice-chain>
+	</int-http:outbound-gateway>
+
+	<bean id="dojoAggregator" class="br.com.dojo.integration.DojoAggregator" />
+	<int:aggregator ref="dojoAggregator" input-channel="dojo-aggregator-channel" output-channel="dojo-reply-channel" />
+
+</beans> 
