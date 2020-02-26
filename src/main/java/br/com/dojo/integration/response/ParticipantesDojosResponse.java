@@ -9,14 +9,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DojoResponse {
+public class ParticipantesDojosResponse {
 
 	@JsonProperty
 	private Long id;
-	@JsonProperty
-	private String descricao;
-	@JsonProperty
-	private String responsavel;
 	@JsonProperty
 	private Collection<Participante> participantes;
 

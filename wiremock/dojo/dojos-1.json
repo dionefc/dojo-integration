@@ -1,0 +1,29 @@
+{ 
+   "request":{ 
+      "url":"/dojos",
+      "method":"POST",
+      "bodyPatterns":[ 
+         { 
+            "equalToJson":{ 
+               "id": "1"
+            }
+         }
+      ]
+   },
+   "response":{ 
+      "status":200,
+      "jsonBody":
+            { 
+               "id":1,
+               "descricao":"Jest",
+               "responsavel":"Caue"
+            },
+      "headers":{ 
+         "Content-Type":"application/json",
+         "Access-Control-Allow-Origin":"*",
+         "Access-Control-Allow-Headers":"*",
+         "Access-Control-Allow-Methods":"*",
+         "Access-Control-Expose-Headers":"*"
+      }
+   }
+}

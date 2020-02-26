@@ -1,0 +1,38 @@
+{ 
+   "request":{ 
+      "url":"/dojos/participantes",
+      "method":"POST",
+      "bodyPatterns":[ 
+         { 
+            "equalToJson":{ 
+               "id": "3"
+            }
+         }
+      ]
+   },
+   "response":{ 
+      "status":200,
+      "jsonBody":
+            { 
+               "id":3,
+               "participantes": [
+                  {
+                     "nome": "Teste 4"
+                  },
+                  {
+                     "nome": "Teste 12"
+                  },
+                  {
+                     "nome": "Teste 9"
+                  }
+               ]
+            },
+      "headers":{ 
+         "Content-Type":"application/json",
+         "Access-Control-Allow-Origin":"*",
+         "Access-Control-Allow-Headers":"*",
+         "Access-Control-Allow-Methods":"*",
+         "Access-Control-Expose-Headers":"*"
+      }
+   }
+}
